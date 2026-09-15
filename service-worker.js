@@ -1,4 +1,4 @@
-const CACHE_NAME = 'links-sre-v1';
+const CACHE_NAME = 'links-sre-v2';
 const SHELL = [
   './',
   './index.html',
