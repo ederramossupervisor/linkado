@@ -192,7 +192,7 @@
   .card{
     position:relative;
     display:flex;
-    align-items:center;
+    align-items:flex-start;
     gap:12px;
     padding:15px 14px;
     background:var(--bg-panel);
@@ -221,6 +221,7 @@
     font-weight:700;
     color:var(--cyan-bright);
     overflow:hidden;
+    align-self:center;
   }
   .card .favicon img{width:100%;height:100%;object-fit:cover;}
 
@@ -231,9 +232,11 @@
   .card .name{
     font-size:14.5px;
     font-weight:500;
-    white-space:nowrap;
+    line-height:1.3;
+    display:-webkit-box;
+    -webkit-line-clamp:2;
+    -webkit-box-orient:vertical;
     overflow:hidden;
-    text-overflow:ellipsis;
   }
   .card .url{
     font-size:12px;
@@ -252,6 +255,7 @@
     color:var(--line);
     flex-shrink:0;
     display:flex;
+    align-self:center;
   }
   .star-btn svg{width:19px;height:19px;}
   .star-btn.active{color:var(--gold);}
@@ -407,7 +411,7 @@
   }
 
   .card-menu-btn{
-    background:none;border:none;color:var(--muted);cursor:pointer;padding:6px;flex-shrink:0;display:flex;
+    background:none;border:none;color:var(--muted);cursor:pointer;padding:6px;flex-shrink:0;display:flex;align-self:center;
   }
   .card-menu-btn svg{width:17px;height:17px;}
 </style>
