@@ -1,0 +1,704 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+<title>Links · SRE Afonso Cláudio</title>
+<meta name="description" content="Painel de acesso rápido aos links da SRE Afonso Cláudio" />
+<link rel="manifest" href="manifest.json" />
+<meta name="theme-color" content="#0A1628" />
+<link rel="apple-touch-icon" href="icons/icon-180.png" />
+<link rel="icon" href="icons/icon-32.png" sizes="32x32" />
+<meta name="apple-mobile-web-app-capable" content="yes" />
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+<meta name="apple-mobile-web-app-title" content="Links SRE" />
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+
+<style>
+  :root{
+    --bg-deep:#0A1628;
+    --bg-panel:#0F2038;
+    --bg-panel-raised:#142A49;
+    --line:#1F3A5F;
+    --cyan:#38BDF8;
+    --cyan-bright:#8FE3FF;
+    --text:#EAF2FB;
+    --muted:#7E97B8;
+    --gold:#F5C453;
+    --danger:#F06868;
+    --radius:14px;
+    --shell-max:880px;
+  }
+
+  *{box-sizing:border-box;}
+  html,body{height:100%;}
+  body{
+    margin:0;
+    background:
+      radial-gradient(1100px 600px at 15% -10%, rgba(56,189,248,0.10), transparent 60%),
+      radial-gradient(900px 500px at 100% 0%, rgba(56,189,248,0.06), transparent 55%),
+      var(--bg-deep);
+    color:var(--text);
+    font-family:'Inter', system-ui, sans-serif;
+    -webkit-font-smoothing:antialiased;
+    min-height:100vh;
+    padding-bottom:96px;
+  }
+
+  /* Linhas de contorno estilo topográfico, ecoando o mapa da logo */
+  .topo{
+    position:fixed;
+    inset:0;
+    z-index:0;
+    pointer-events:none;
+    opacity:0.35;
+  }
+
+  h1,h2,h3, .brand-name, .section-title{
+    font-family:'Space Grotesk', system-ui, sans-serif;
+  }
+
+  .shell{
+    position:relative;
+    z-index:1;
+    max-width:var(--shell-max);
+    margin:0 auto;
+    padding:28px 20px 0;
+  }
+
+  header.top{
+    display:flex;
+    align-items:center;
+    gap:14px;
+    margin-bottom:26px;
+  }
+
+  header.top img{
+    width:46px;
+    height:46px;
+    border-radius:12px;
+    flex-shrink:0;
+    box-shadow:0 0 0 1px rgba(56,189,248,0.35), 0 6px 18px rgba(0,0,0,0.35);
+  }
+
+  .brand-name{
+    font-size:17px;
+    font-weight:600;
+    line-height:1.2;
+    color:var(--text);
+  }
+
+  .brand-sub{
+    font-size:12.5px;
+    color:var(--muted);
+    letter-spacing:0.02em;
+  }
+
+  /* Busca — a ação central da interface */
+  .search-wrap{
+    position:relative;
+    margin-bottom:30px;
+  }
+
+  .search-wrap svg{
+    position:absolute;
+    left:16px;
+    top:50%;
+    transform:translateY(-50%);
+    width:18px;
+    height:18px;
+    color:var(--muted);
+  }
+
+  #search{
+    width:100%;
+    padding:15px 16px 15px 46px;
+    background:var(--bg-panel);
+    border:1px solid var(--line);
+    border-radius:var(--radius);
+    color:var(--text);
+    font-size:15.5px;
+    font-family:inherit;
+    outline:none;
+    transition:border-color 0.15s, background 0.15s;
+  }
+  #search::placeholder{color:var(--muted);}
+  #search:focus{
+    border-color:var(--cyan);
+    background:var(--bg-panel-raised);
+  }
+
+  .section-title{
+    font-size:13px;
+    font-weight:600;
+    text-transform:none;
+    color:var(--muted);
+    letter-spacing:0.01em;
+    margin:0 0 12px 2px;
+    display:flex;
+    align-items:center;
+    gap:7px;
+  }
+
+  .section-title svg{width:14px;height:14px;color:var(--gold);}
+
+  .favorites-row{
+    display:flex;
+    gap:10px;
+    overflow-x:auto;
+    padding:2px 2px 14px;
+    margin-bottom:8px;
+    scrollbar-width:none;
+  }
+  .favorites-row::-webkit-scrollbar{display:none;}
+
+  .fav-chip{
+    flex-shrink:0;
+    display:flex;
+    align-items:center;
+    gap:9px;
+    padding:11px 16px;
+    background:linear-gradient(135deg, rgba(245,196,83,0.14), rgba(245,196,83,0.04));
+    border:1px solid rgba(245,196,83,0.4);
+    border-radius:11px;
+    color:var(--text);
+    text-decoration:none;
+    font-size:14px;
+    font-weight:500;
+    white-space:nowrap;
+    cursor:pointer;
+    transition:transform 0.12s, border-color 0.12s;
+  }
+  .fav-chip:hover{transform:translateY(-1px); border-color:var(--gold);}
+  .fav-chip .fav-dot{
+    width:6px;height:6px;border-radius:50%;
+    background:var(--gold);
+    flex-shrink:0;
+  }
+
+  main{
+    margin-top:8px;
+  }
+
+  .grid{
+    display:grid;
+    grid-template-columns:repeat(auto-fill, minmax(240px, 1fr));
+    gap:12px;
+  }
+
+  .card{
+    position:relative;
+    display:flex;
+    align-items:center;
+    gap:12px;
+    padding:15px 14px;
+    background:var(--bg-panel);
+    border:1px solid var(--line);
+    border-radius:var(--radius);
+    text-decoration:none;
+    color:var(--text);
+    cursor:pointer;
+    transition:border-color 0.14s, background 0.14s;
+  }
+  .card:hover{
+    border-color:rgba(56,189,248,0.5);
+    background:var(--bg-panel-raised);
+  }
+
+  .card .favicon{
+    width:34px;
+    height:34px;
+    border-radius:9px;
+    background:var(--bg-panel-raised);
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    flex-shrink:0;
+    font-size:14px;
+    font-weight:700;
+    color:var(--cyan-bright);
+    overflow:hidden;
+  }
+  .card .favicon img{width:100%;height:100%;object-fit:cover;}
+
+  .card .info{
+    min-width:0;
+    flex:1;
+  }
+  .card .name{
+    font-size:14.5px;
+    font-weight:500;
+    white-space:nowrap;
+    overflow:hidden;
+    text-overflow:ellipsis;
+  }
+  .card .url{
+    font-size:12px;
+    color:var(--muted);
+    white-space:nowrap;
+    overflow:hidden;
+    text-overflow:ellipsis;
+    margin-top:2px;
+  }
+
+  .star-btn{
+    background:none;
+    border:none;
+    padding:6px;
+    cursor:pointer;
+    color:var(--line);
+    flex-shrink:0;
+    display:flex;
+  }
+  .star-btn svg{width:19px;height:19px;}
+  .star-btn.active{color:var(--gold);}
+  .star-btn:hover{color:var(--gold);}
+
+  .empty{
+    text-align:center;
+    padding:70px 20px;
+    color:var(--muted);
+  }
+  .empty svg{width:40px;height:40px;color:var(--line);margin-bottom:14px;}
+  .empty p{margin:4px 0;font-size:14px;}
+  .empty .lead{font-size:15.5px;color:var(--text);font-weight:500;}
+
+  /* Botão flutuante de adicionar */
+  .fab{
+    position:fixed;
+    right:22px;
+    bottom:26px;
+    width:58px;
+    height:58px;
+    border-radius:50%;
+    background:var(--cyan);
+    color:#04141F;
+    border:none;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    cursor:pointer;
+    box-shadow:0 8px 24px rgba(56,189,248,0.35), 0 2px 8px rgba(0,0,0,0.4);
+    z-index:5;
+    transition:transform 0.15s, box-shadow 0.15s;
+  }
+  .fab:hover{transform:translateY(-2px) scale(1.03);}
+  .fab svg{width:26px;height:26px;}
+
+  /* Modal */
+  .overlay{
+    position:fixed;
+    inset:0;
+    background:rgba(6,13,25,0.72);
+    backdrop-filter:blur(3px);
+    display:none;
+    align-items:flex-end;
+    justify-content:center;
+    z-index:10;
+  }
+  .overlay.open{display:flex;}
+
+  .modal{
+    width:100%;
+    max-width:480px;
+    background:var(--bg-panel);
+    border:1px solid var(--line);
+    border-bottom:none;
+    border-radius:20px 20px 0 0;
+    padding:22px 22px calc(22px + env(safe-area-inset-bottom));
+    animation:rise 0.22s ease-out;
+  }
+  @media (min-width:600px){
+    .overlay{align-items:center;}
+    .modal{border-radius:18px;border-bottom:1px solid var(--line);margin-bottom:40px;}
+  }
+  @keyframes rise{from{transform:translateY(24px);opacity:0;} to{transform:translateY(0);opacity:1;}}
+
+  .modal h2{
+    font-size:18px;
+    margin:0 0 18px;
+    font-weight:600;
+  }
+
+  .field{margin-bottom:14px;}
+  .field label{
+    display:block;
+    font-size:12.5px;
+    color:var(--muted);
+    margin-bottom:6px;
+  }
+  .field input{
+    width:100%;
+    padding:12px 13px;
+    background:var(--bg-deep);
+    border:1px solid var(--line);
+    border-radius:10px;
+    color:var(--text);
+    font-family:inherit;
+    font-size:14.5px;
+    outline:none;
+  }
+  .field input:focus{border-color:var(--cyan);}
+
+  .check-row{
+    display:flex;
+    align-items:center;
+    gap:9px;
+    margin:16px 0 20px;
+    cursor:pointer;
+    user-select:none;
+  }
+  .check-row input{width:17px;height:17px;accent-color:var(--gold);}
+  .check-row span{font-size:14px;color:var(--text);}
+
+  .modal-actions{
+    display:flex;
+    gap:10px;
+  }
+  .btn{
+    flex:1;
+    padding:13px;
+    border-radius:10px;
+    border:none;
+    font-family:inherit;
+    font-size:14.5px;
+    font-weight:600;
+    cursor:pointer;
+  }
+  .btn.primary{background:var(--cyan);color:#04141F;}
+  .btn.primary:disabled{opacity:0.5;cursor:default;}
+  .btn.ghost{background:transparent;border:1px solid var(--line);color:var(--muted);}
+  .btn.danger{background:transparent;border:1px solid rgba(240,104,104,0.4);color:var(--danger);}
+
+  .error-msg{
+    font-size:13px;
+    color:var(--danger);
+    margin:-6px 0 12px;
+    display:none;
+  }
+  .error-msg.show{display:block;}
+
+  .toast{
+    position:fixed;
+    left:50%;
+    bottom:96px;
+    transform:translate(-50%, 12px);
+    background:var(--bg-panel-raised);
+    border:1px solid var(--line);
+    color:var(--text);
+    padding:11px 18px;
+    border-radius:10px;
+    font-size:13.5px;
+    opacity:0;
+    pointer-events:none;
+    transition:opacity 0.2s, transform 0.2s;
+    z-index:20;
+  }
+  .toast.show{opacity:1; transform:translate(-50%, 0);}
+
+  .status-line{
+    text-align:center;
+    color:var(--muted);
+    font-size:13px;
+    padding:40px 0;
+  }
+
+  .card-menu-btn{
+    background:none;border:none;color:var(--muted);cursor:pointer;padding:6px;flex-shrink:0;display:flex;
+  }
+  .card-menu-btn svg{width:17px;height:17px;}
+</style>
+</head>
+<body>
+
+<svg class="topo" viewBox="0 0 800 1400" preserveAspectRatio="xMidYMin slice" xmlns="http://www.w3.org/2000/svg">
+  <path d="M-20,120 Q120,60 260,110 T560,90 T900,140" fill="none" stroke="#38BDF8" stroke-width="1"/>
+  <path d="M-20,220 Q140,170 300,215 T620,190 T900,240" fill="none" stroke="#38BDF8" stroke-width="1"/>
+  <path d="M-20,1180 Q160,1230 320,1190 T640,1220 T900,1170" fill="none" stroke="#38BDF8" stroke-width="1"/>
+  <path d="M-20,1280 Q180,1330 340,1290 T660,1320 T900,1270" fill="none" stroke="#38BDF8" stroke-width="1"/>
+</svg>
+
+<div class="shell">
+  <header class="top">
+    <img src="icons/icon-192.png" alt="Logo SRE Afonso Cláudio" />
+    <div>
+      <div class="brand-name">SRE Afonso Cláudio</div>
+      <div class="brand-sub">Painel de links</div>
+    </div>
+  </header>
+
+  <div class="search-wrap">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+    <input type="text" id="search" placeholder="Pesquisar link pelo nome..." autocomplete="off" />
+  </div>
+
+  <main id="main">
+    <div class="status-line" id="loading">Carregando seus links...</div>
+  </main>
+</div>
+
+<button class="fab" id="fabAdd" aria-label="Adicionar link">
+  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+</button>
+
+<div class="overlay" id="overlay">
+  <div class="modal">
+    <h2 id="modalTitle">Novo link</h2>
+    <div class="field">
+      <label for="inputNome">Nome</label>
+      <input type="text" id="inputNome" placeholder="Ex: Portal do Servidor" />
+    </div>
+    <div class="field">
+      <label for="inputUrl">Endereço (URL)</label>
+      <input type="text" id="inputUrl" placeholder="Ex: sedu.es.gov.br" />
+    </div>
+    <div class="error-msg" id="formError"></div>
+    <label class="check-row">
+      <input type="checkbox" id="inputFav" />
+      <span>Marcar como favorito</span>
+    </label>
+    <div class="modal-actions">
+      <button class="btn ghost" id="btnCancel">Cancelar</button>
+      <button class="btn danger" id="btnDelete" style="display:none;">Excluir</button>
+      <button class="btn primary" id="btnSave">Salvar</button>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script type="module">
+import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
+
+const SUPABASE_URL = 'https://dxsshtmvdlhumbrxpkwr.supabase.co';
+const SUPABASE_KEY = 'sb_publishable_fvjms00S_W7on-8-qCUMUg_g5a9gBpu';
+const supabase = createClient(SUPABASE_URL, SUPABASE_KEY);
+
+const mainEl = document.getElementById('main');
+const searchInput = document.getElementById('search');
+const overlay = document.getElementById('overlay');
+const modalTitle = document.getElementById('modalTitle');
+const inputNome = document.getElementById('inputNome');
+const inputUrl = document.getElementById('inputUrl');
+const inputFav = document.getElementById('inputFav');
+const formError = document.getElementById('formError');
+const btnSave = document.getElementById('btnSave');
+const btnCancel = document.getElementById('btnCancel');
+const btnDelete = document.getElementById('btnDelete');
+const toastEl = document.getElementById('toast');
+
+let links = [];
+let editingId = null;
+
+function normalizeUrl(raw){
+  let u = raw.trim();
+  if(!/^https?:\/\//i.test(u)){
+    u = 'https://' + u;
+  }
+  return u;
+}
+
+function hostnameOf(url){
+  try{ return new URL(url).hostname.replace('www.',''); }
+  catch{ return url; }
+}
+
+function initials(name){
+  return name.trim().slice(0,2).toUpperCase();
+}
+
+function showToast(msg){
+  toastEl.textContent = msg;
+  toastEl.classList.add('show');
+  setTimeout(()=>toastEl.classList.remove('show'), 2200);
+}
+
+function escapeHtml(str){
+  const d = document.createElement('div');
+  d.textContent = str;
+  return d.innerHTML;
+}
+
+async function loadLinks(){
+  const { data, error } = await supabase
+    .from('links')
+    .select('*')
+    .order('nome', { ascending: true });
+
+  if(error){
+    mainEl.innerHTML = `<div class="status-line">Não foi possível carregar os links agora.<br>${escapeHtml(error.message)}</div>`;
+    return;
+  }
+  links = data || [];
+  render();
+}
+
+function render(){
+  const query = searchInput.value.trim().toLowerCase();
+  const filtered = query
+    ? links.filter(l => l.nome.toLowerCase().includes(query))
+    : links;
+
+  const favs = filtered.filter(l => l.favorito);
+  const rest = filtered.filter(l => !l.favorito);
+
+  if(links.length === 0){
+    mainEl.innerHTML = `
+      <div class="empty">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg>
+        <p class="lead">Nenhum link ainda</p>
+        <p>Toque no botão + para adicionar o primeiro</p>
+      </div>`;
+    return;
+  }
+
+  if(filtered.length === 0){
+    mainEl.innerHTML = `<div class="status-line">Nenhum link encontrado para "${escapeHtml(query)}"</div>`;
+    return;
+  }
+
+  let html = '';
+
+  if(favs.length){
+    html += `<div class="section-title">
+      <svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87L18.18 21 12 17.77 5.82 21 7 14.14l-5-4.87 6.91-1.01z"/></svg>
+      Favoritos
+    </div>
+    <div class="favorites-row">
+      ${favs.map(l => `
+        <div class="fav-chip" data-open="${l.id}">
+          <span class="fav-dot"></span>
+          <span>${escapeHtml(l.nome)}</span>
+        </div>
+      `).join('')}
+    </div>`;
+  }
+
+  html += `<div class="section-title" style="margin-top:${favs.length ? '22px' : '4px'};">Todos os links</div>
+  <div class="grid">
+    ${filtered.map(l => `
+      <div class="card" data-open="${l.id}">
+        <div class="favicon"><img src="https://www.google.com/s2/favicons?sz=64&domain=${encodeURIComponent(hostnameOf(l.url))}" alt="" onerror="this.style.display='none'; this.parentElement.textContent='${initials(l.nome)}';" /></div>
+        <div class="info">
+          <div class="name">${escapeHtml(l.nome)}</div>
+          <div class="url">${escapeHtml(hostnameOf(l.url))}</div>
+        </div>
+        <button class="star-btn ${l.favorito ? 'active' : ''}" data-star="${l.id}" aria-label="Favoritar" title="Favoritar">
+          <svg viewBox="0 0 24 24" fill="${l.favorito ? 'currentColor' : 'none'}" stroke="currentColor" stroke-width="1.8"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87L18.18 21 12 17.77 5.82 21 7 14.14l-5-4.87 6.91-1.01z"/></svg>
+        </button>
+        <button class="card-menu-btn" data-edit="${l.id}" aria-label="Editar" title="Editar">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M12 20h9"/><path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg>
+        </button>
+      </div>
+    `).join('')}
+  </div>`;
+
+  mainEl.innerHTML = html;
+
+  mainEl.querySelectorAll('[data-open]').forEach(el => {
+    el.addEventListener('click', (e) => {
+      if(e.target.closest('[data-star]') || e.target.closest('[data-edit]')) return;
+      const link = links.find(l => l.id === el.dataset.open);
+      if(link) window.open(link.url, '_blank', 'noopener');
+    });
+  });
+
+  mainEl.querySelectorAll('[data-star]').forEach(el => {
+    el.addEventListener('click', async (e) => {
+      e.stopPropagation();
+      const id = el.dataset.star;
+      const link = links.find(l => l.id === id);
+      const newVal = !link.favorito;
+      link.favorito = newVal;
+      render();
+      const { error } = await supabase.from('links').update({ favorito: newVal }).eq('id', id);
+      if(error) showToast('Erro ao atualizar favorito');
+    });
+  });
+
+  mainEl.querySelectorAll('[data-edit]').forEach(el => {
+    el.addEventListener('click', (e) => {
+      e.stopPropagation();
+      openModal(links.find(l => l.id === el.dataset.edit));
+    });
+  });
+}
+
+function openModal(link){
+  editingId = link ? link.id : null;
+  modalTitle.textContent = link ? 'Editar link' : 'Novo link';
+  inputNome.value = link ? link.nome : '';
+  inputUrl.value = link ? link.url : '';
+  inputFav.checked = link ? link.favorito : false;
+  btnDelete.style.display = link ? 'block' : 'none';
+  formError.classList.remove('show');
+  overlay.classList.add('open');
+  setTimeout(() => inputNome.focus(), 80);
+}
+
+function closeModal(){
+  overlay.classList.remove('open');
+  editingId = null;
+}
+
+document.getElementById('fabAdd').addEventListener('click', () => openModal(null));
+btnCancel.addEventListener('click', closeModal);
+overlay.addEventListener('click', (e) => { if(e.target === overlay) closeModal(); });
+
+btnSave.addEventListener('click', async () => {
+  const nome = inputNome.value.trim();
+  const urlRaw = inputUrl.value.trim();
+
+  if(!nome || !urlRaw){
+    formError.textContent = 'Preencha o nome e o endereço do link.';
+    formError.classList.add('show');
+    return;
+  }
+
+  const url = normalizeUrl(urlRaw);
+  const favorito = inputFav.checked;
+  btnSave.disabled = true;
+
+  if(editingId){
+    const { error } = await supabase.from('links').update({ nome, url, favorito }).eq('id', editingId);
+    btnSave.disabled = false;
+    if(error){ formError.textContent = 'Erro ao salvar: ' + error.message; formError.classList.add('show'); return; }
+    showToast('Link atualizado');
+  } else {
+    const { error } = await supabase.from('links').insert({ nome, url, favorito });
+    btnSave.disabled = false;
+    if(error){ formError.textContent = 'Erro ao salvar: ' + error.message; formError.classList.add('show'); return; }
+    showToast('Link adicionado');
+  }
+
+  closeModal();
+  await loadLinks();
+});
+
+btnDelete.addEventListener('click', async () => {
+  if(!editingId) return;
+  if(!confirm('Excluir este link?')) return;
+  const { error } = await supabase.from('links').delete().eq('id', editingId);
+  if(error){ showToast('Erro ao excluir'); return; }
+  showToast('Link excluído');
+  closeModal();
+  await loadLinks();
+});
+
+searchInput.addEventListener('input', render);
+
+// Instalação PWA
+if('serviceWorker' in navigator){
+  window.addEventListener('load', () => {
+    navigator.serviceWorker.register('service-worker.js').catch(()=>{});
+  });
+}
+
+loadLinks();
+</script>
+
+</body>
+</html>
