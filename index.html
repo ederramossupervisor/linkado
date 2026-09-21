@@ -444,6 +444,108 @@
     background:none;border:none;color:var(--muted);cursor:pointer;padding:6px;flex-shrink:0;display:flex;align-self:center;
   }
   .card-menu-btn svg{width:17px;height:17px;}
+
+  /* Indicador de múltiplos links + dropdown do card */
+  .url-row{
+    display:flex;
+    align-items:center;
+    gap:4px;
+  }
+  .chevron-ind{
+    width:12px;height:12px;
+    color:var(--muted);
+    flex-shrink:0;
+    transition:transform 0.15s;
+  }
+  .card.dd-open .chevron-ind{transform:rotate(180deg);}
+
+  .link-dropdown{
+    position:absolute;
+    top:100%;
+    left:14px;
+    right:14px;
+    margin-top:6px;
+    background:var(--bg-panel-raised);
+    border:1px solid var(--line);
+    border-radius:10px;
+    box-shadow:0 10px 24px rgba(0,0,0,0.45);
+    max-height:0;
+    opacity:0;
+    overflow:hidden;
+    pointer-events:none;
+    transition:max-height 0.18s ease, opacity 0.15s ease;
+    z-index:25;
+  }
+  .link-dropdown.open{
+    max-height:240px;
+    opacity:1;
+    pointer-events:auto;
+    overflow-y:auto;
+  }
+  .link-dropdown-item{
+    display:block;
+    padding:10px 13px;
+    font-size:13px;
+    font-weight:500;
+    color:var(--text);
+    text-decoration:none;
+    border-bottom:1px solid var(--line);
+    white-space:nowrap;
+    overflow:hidden;
+    text-overflow:ellipsis;
+  }
+  .link-dropdown-item:last-child{border-bottom:none;}
+  .link-dropdown-item:hover{background:rgba(56,189,248,0.12); color:var(--cyan-bright);}
+
+  /* Linhas de link dentro do modal */
+  .link-row{
+    display:flex;
+    gap:8px;
+    margin-bottom:8px;
+    align-items:center;
+  }
+  .link-row input{
+    padding:11px 12px;
+    background:var(--bg-deep);
+    border:1px solid var(--line);
+    border-radius:9px;
+    color:var(--text);
+    font-family:inherit;
+    font-size:13.5px;
+    outline:none;
+    min-width:0;
+  }
+  .link-row input:focus{border-color:var(--cyan);}
+  .link-row-nome{flex:0 0 36%;}
+  .link-row-url{flex:1;}
+  .link-row-remove{
+    flex-shrink:0;
+    width:32px;height:32px;
+    border-radius:8px;
+    border:1px solid var(--line);
+    background:transparent;
+    color:var(--muted);
+    font-size:17px;
+    line-height:1;
+    cursor:pointer;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+  }
+  .link-row-remove:hover{color:var(--danger); border-color:rgba(240,104,104,0.4);}
+  .add-link-btn{
+    background:none;
+    border:1px dashed var(--line);
+    color:var(--cyan);
+    border-radius:9px;
+    padding:9px 12px;
+    font-size:13px;
+    font-weight:600;
+    cursor:pointer;
+    width:100%;
+    margin-top:2px;
+  }
+  .add-link-btn:hover{border-color:var(--cyan); background:rgba(56,189,248,0.06);}
 </style>
 </head>
 <body>
@@ -482,12 +584,13 @@
   <div class="modal">
     <h2 id="modalTitle">Novo link</h2>
     <div class="field">
-      <label for="inputNome">Nome</label>
+      <label for="inputNome">Nome do card</label>
       <input type="text" id="inputNome" placeholder="Ex: Portal do Servidor" />
     </div>
     <div class="field">
-      <label for="inputUrl">Endereço (URL)</label>
-      <input type="text" id="inputUrl" placeholder="Ex: sedu.es.gov.br" />
+      <label>Links</label>
+      <div id="linkRows"></div>
+      <button type="button" class="add-link-btn" id="btnAddLink">+ Adicionar link</button>
     </div>
     <div class="error-msg" id="formError"></div>
     <label class="check-row">
@@ -516,7 +619,8 @@ const searchInput = document.getElementById('search');
 const overlay = document.getElementById('overlay');
 const modalTitle = document.getElementById('modalTitle');
 const inputNome = document.getElementById('inputNome');
-const inputUrl = document.getElementById('inputUrl');
+const linkRowsEl = document.getElementById('linkRows');
+const btnAddLink = document.getElementById('btnAddLink');
 const inputFav = document.getElementById('inputFav');
 const formError = document.getElementById('formError');
 const btnSave = document.getElementById('btnSave');
@@ -526,6 +630,7 @@ const toastEl = document.getElementById('toast');
 
 let links = [];
 let editingId = null;
+let rowCount = 0;
 
 function normalizeUrl(raw){
   let u = raw.trim();
@@ -555,6 +660,62 @@ function escapeHtml(str){
   d.textContent = str;
   return d.innerHTML;
 }
+
+function addLinkRow(nome = '', url = ''){
+  const idx = rowCount++;
+  const row = document.createElement('div');
+  row.className = 'link-row';
+  row.dataset.row = idx;
+  row.innerHTML = `
+    <input type="text" class="link-row-nome" placeholder="Nome do link" value="${escapeHtml(nome)}" />
+    <input type="text" class="link-row-url" placeholder="URL" value="${escapeHtml(url)}" />
+    <button type="button" class="link-row-remove" data-remove-row="${idx}" aria-label="Remover link" title="Remover link">&times;</button>
+  `;
+  linkRowsEl.appendChild(row);
+  updateRemoveButtons();
+}
+
+function updateRemoveButtons(){
+  const rows = linkRowsEl.querySelectorAll('.link-row');
+  rows.forEach(r => {
+    const btn = r.querySelector('.link-row-remove');
+    btn.style.visibility = rows.length > 1 ? 'visible' : 'hidden';
+  });
+}
+
+linkRowsEl.addEventListener('click', (e) => {
+  const btn = e.target.closest('.link-row-remove');
+  if(!btn) return;
+  if(linkRowsEl.querySelectorAll('.link-row').length > 1){
+    btn.closest('.link-row').remove();
+    updateRemoveButtons();
+  }
+});
+
+btnAddLink.addEventListener('click', () => addLinkRow());
+
+function closeAllDropdowns(exceptId){
+  mainEl.querySelectorAll('.card.dd-open').forEach(card => {
+    if(card.dataset.open === exceptId) return;
+    card.classList.remove('dd-open');
+    const dd = card.querySelector('.link-dropdown');
+    if(dd) dd.classList.remove('open');
+  });
+}
+
+function toggleDropdown(id){
+  const card = mainEl.querySelector(`.card[data-open="${id}"]`);
+  const dd = card ? card.querySelector('.link-dropdown') : null;
+  if(!card || !dd) return;
+  const isOpen = card.classList.contains('dd-open');
+  closeAllDropdowns(id);
+  card.classList.toggle('dd-open', !isOpen);
+  dd.classList.toggle('open', !isOpen);
+}
+
+document.addEventListener('click', (e) => {
+  if(!e.target.closest('.card')) closeAllDropdowns(null);
+});
 
 async function loadLinks(){
   const { data, error } = await supabase
@@ -613,12 +774,20 @@ function render(){
 
   html += `<div class="section-title" style="margin-top:${favs.length ? '22px' : '4px'};">Todos os links</div>
   <div class="grid">
-    ${filtered.map(l => `
+    ${filtered.map(l => {
+      const urls = l.urls && l.urls.length ? l.urls : [];
+      const first = urls[0] || { nome: l.nome, url: '' };
+      const isMulti = urls.length > 1;
+      const subtitle = isMulti ? `${urls.length} links` : hostnameOf(first.url);
+      return `
       <div class="card" data-open="${l.id}">
-        <div class="favicon"><img src="https://www.google.com/s2/favicons?sz=64&domain=${encodeURIComponent(hostnameOf(l.url))}" alt="" onerror="this.style.display='none'; this.parentElement.textContent='${initials(l.nome)}';" /></div>
+        <div class="favicon"><img src="https://www.google.com/s2/favicons?sz=64&domain=${encodeURIComponent(hostnameOf(first.url))}" alt="" onerror="this.style.display='none'; this.parentElement.textContent='${initials(l.nome)}';" /></div>
         <div class="info" data-tooltip="${escapeHtml(l.nome)}">
           <div class="name">${escapeHtml(l.nome)}</div>
-          <div class="url">${escapeHtml(hostnameOf(l.url))}</div>
+          <div class="url-row">
+            <div class="url">${escapeHtml(subtitle)}</div>
+            ${isMulti ? `<svg class="chevron-ind" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg>` : ''}
+          </div>
         </div>
         <button class="star-btn ${l.favorito ? 'active' : ''}" data-star="${l.id}" aria-label="Favoritar" title="Favoritar">
           <svg viewBox="0 0 24 24" fill="${l.favorito ? 'currentColor' : 'none'}" stroke="currentColor" stroke-width="1.8"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87L18.18 21 12 17.77 5.82 21 7 14.14l-5-4.87 6.91-1.01z"/></svg>
@@ -626,8 +795,12 @@ function render(){
         <button class="card-menu-btn" data-edit="${l.id}" aria-label="Editar" title="Editar">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M12 20h9"/><path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg>
         </button>
+        ${isMulti ? `
+        <div class="link-dropdown" id="dropdown-${l.id}">
+          ${urls.map(u => `<a href="${escapeHtml(u.url)}" target="_blank" rel="noopener" class="link-dropdown-item">${escapeHtml(u.nome || hostnameOf(u.url))}</a>`).join('')}
+        </div>` : ''}
       </div>
-    `).join('')}
+    `;}).join('')}
   </div>`;
 
   mainEl.innerHTML = html;
@@ -637,7 +810,20 @@ function render(){
       if(e.target.closest('[data-star]') || e.target.closest('[data-edit]')) return;
       if(el.dataset.suppressClick === '1') return;
       const link = links.find(l => l.id === el.dataset.open);
-      if(link) window.open(link.url, '_blank', 'noopener');
+      if(!link || !link.urls || !link.urls.length) return;
+      const isCard = el.classList.contains('card');
+      if(isCard && link.urls.length > 1){
+        toggleDropdown(link.id);
+      } else {
+        window.open(link.urls[0].url, '_blank', 'noopener');
+      }
+    });
+  });
+
+  mainEl.querySelectorAll('.link-dropdown-item').forEach(a => {
+    a.addEventListener('click', (e) => {
+      e.stopPropagation();
+      closeAllDropdowns(null);
     });
   });
 
@@ -698,10 +884,15 @@ function openModal(link){
   editingId = link ? link.id : null;
   modalTitle.textContent = link ? 'Editar link' : 'Novo link';
   inputNome.value = link ? link.nome : '';
-  inputUrl.value = link ? link.url : '';
   inputFav.checked = link ? link.favorito : false;
   btnDelete.style.display = link ? 'block' : 'none';
   formError.classList.remove('show');
+
+  linkRowsEl.innerHTML = '';
+  rowCount = 0;
+  const urls = (link && link.urls && link.urls.length) ? link.urls : [{ nome: '', url: '' }];
+  urls.forEach(u => addLinkRow(u.nome || '', u.url || ''));
+
   overlay.classList.add('open');
   setTimeout(() => inputNome.focus(), 80);
 }
@@ -717,25 +908,35 @@ overlay.addEventListener('click', (e) => { if(e.target === overlay) closeModal()
 
 btnSave.addEventListener('click', async () => {
   const nome = inputNome.value.trim();
-  const urlRaw = inputUrl.value.trim();
+  const rows = [...linkRowsEl.querySelectorAll('.link-row')];
+  const rawUrls = rows
+    .map(r => ({
+      nome: r.querySelector('.link-row-nome').value.trim(),
+      url: r.querySelector('.link-row-url').value.trim()
+    }))
+    .filter(u => u.url);
 
-  if(!nome || !urlRaw){
-    formError.textContent = 'Preencha o nome e o endereço do link.';
+  if(!nome || rawUrls.length === 0){
+    formError.textContent = 'Preencha o nome do card e ao menos um link.';
     formError.classList.add('show');
     return;
   }
 
-  const url = normalizeUrl(urlRaw);
+  const urls = rawUrls.map(u => {
+    const url = normalizeUrl(u.url);
+    return { nome: u.nome || hostnameOf(url), url };
+  });
+
   const favorito = inputFav.checked;
   btnSave.disabled = true;
 
   if(editingId){
-    const { error } = await supabase.from('links').update({ nome, url, favorito }).eq('id', editingId);
+    const { error } = await supabase.from('links').update({ nome, urls, favorito }).eq('id', editingId);
     btnSave.disabled = false;
     if(error){ formError.textContent = 'Erro ao salvar: ' + error.message; formError.classList.add('show'); return; }
     showToast('Link atualizado');
   } else {
-    const { error } = await supabase.from('links').insert({ nome, url, favorito });
+    const { error } = await supabase.from('links').insert({ nome, urls, favorito });
     btnSave.disabled = false;
     if(error){ formError.textContent = 'Erro ao salvar: ' + error.message; formError.classList.add('show'); return; }
     showToast('Link adicionado');
