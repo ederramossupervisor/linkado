@@ -156,6 +156,7 @@
   .favorites-row::-webkit-scrollbar{display:none;}
 
   .fav-chip{
+    position:relative;
     flex-shrink:0;
     display:flex;
     align-items:center;
@@ -173,10 +174,21 @@
     transition:transform 0.12s, border-color 0.12s;
   }
   .fav-chip:hover{transform:translateY(-1px); border-color:var(--gold);}
+  .fav-chip.dd-open{transform:none !important; border-color:var(--gold);}
   .fav-chip .fav-dot{
     width:6px;height:6px;border-radius:50%;
     background:var(--gold);
     flex-shrink:0;
+  }
+  .fav-chip .chevron-ind{color:var(--gold);}
+  .fav-chip .link-dropdown{
+    position:fixed;
+    top:auto;
+    left:auto;
+    right:auto;
+    margin-top:0;
+    min-width:200px;
+    max-width:280px;
   }
 
   main{
@@ -478,7 +490,8 @@
     flex-shrink:0;
     transition:transform 0.15s;
   }
-  .card.dd-open .chevron-ind{transform:rotate(180deg);}
+  .card.dd-open .chevron-ind,
+  .fav-chip.dd-open .chevron-ind{transform:rotate(180deg);}
 
   .link-dropdown{
     position:absolute;
@@ -747,28 +760,35 @@ btnAddLink.addEventListener('click', () => {
   addLinkRow('', '', lastGrupo);
 });
 
-function closeAllDropdowns(exceptId){
-  mainEl.querySelectorAll('.card.dd-open').forEach(card => {
-    if(card.dataset.open === exceptId) return;
-    card.classList.remove('dd-open');
-    const dd = card.querySelector('.link-dropdown');
+function closeAllDropdowns(exceptEl){
+  mainEl.querySelectorAll('.dd-open').forEach(el => {
+    if(el === exceptEl) return;
+    el.classList.remove('dd-open');
+    const dd = el.querySelector('.link-dropdown');
     if(dd) dd.classList.remove('open');
   });
 }
 
-function toggleDropdown(id){
-  const card = mainEl.querySelector(`.card[data-open="${id}"]`);
-  const dd = card ? card.querySelector('.link-dropdown') : null;
-  if(!card || !dd) return;
-  const isOpen = card.classList.contains('dd-open');
-  closeAllDropdowns(id);
-  card.classList.toggle('dd-open', !isOpen);
+function toggleDropdown(el){
+  const dd = el.querySelector('.link-dropdown');
+  if(!el || !dd) return;
+  const isOpen = el.classList.contains('dd-open');
+  closeAllDropdowns(isOpen ? null : el);
+  if(!isOpen && el.classList.contains('fav-chip')){
+    const rect = el.getBoundingClientRect();
+    const ddWidth = 220;
+    dd.style.top = (rect.bottom + 6) + 'px';
+    dd.style.left = Math.max(8, Math.min(rect.left, window.innerWidth - ddWidth - 8)) + 'px';
+  }
+  el.classList.toggle('dd-open', !isOpen);
   dd.classList.toggle('open', !isOpen);
 }
 
 document.addEventListener('click', (e) => {
-  if(!e.target.closest('.card')) closeAllDropdowns(null);
+  if(!e.target.closest('.card, .fav-chip')) closeAllDropdowns(null);
 });
+window.addEventListener('scroll', () => closeAllDropdowns(null), true);
+window.addEventListener('resize', () => closeAllDropdowns(null));
 
 async function loadLinks(){
   const { data, error } = await supabase
@@ -827,12 +847,24 @@ function render(){
       Favoritos
     </div>
     <div class="favorites-row">
-      ${favs.map(l => `
+      ${favs.map(l => {
+        const urls = l.urls && l.urls.length ? l.urls : [];
+        const isMulti = urls.length > 1;
+        const groups = groupUrls(urls);
+        return `
         <div class="fav-chip" data-open="${l.id}">
           <span class="fav-dot"></span>
           <span>${escapeHtml(l.nome)}</span>
-        </div>
-      `).join('')}
+          ${isMulti ? `<svg class="chevron-ind" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg>` : ''}
+          ${isMulti ? `
+          <div class="link-dropdown" id="dropdown-fav-${l.id}">
+            ${groups.map(g => `
+              ${g.grupo ? `<div class="link-dropdown-group-title">${escapeHtml(g.grupo)}</div>` : ''}
+              ${g.items.map(u => `<a href="${escapeHtml(u.url)}" target="_blank" rel="noopener" class="link-dropdown-item">${escapeHtml(u.nome || hostnameOf(u.url))}</a>`).join('')}
+            `).join('')}
+          </div>` : ''}
+        </div>`;
+      }).join('')}
     </div>`;
   }
 
@@ -882,9 +914,8 @@ function render(){
       if(el.dataset.suppressClick === '1') return;
       const link = links.find(l => l.id === el.dataset.open);
       if(!link || !link.urls || !link.urls.length) return;
-      const isCard = el.classList.contains('card');
-      if(isCard && link.urls.length > 1){
-        toggleDropdown(link.id);
+      if(link.urls.length > 1){
+        toggleDropdown(el);
       } else {
         window.open(link.urls[0].url, '_blank', 'noopener');
       }
