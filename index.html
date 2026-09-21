@@ -338,16 +338,19 @@
   .modal{
     width:100%;
     max-width:480px;
+    max-height:88vh;
     background:var(--bg-panel);
     border:1px solid var(--line);
     border-bottom:none;
     border-radius:20px 20px 0 0;
-    padding:22px 22px calc(22px + env(safe-area-inset-bottom));
+    padding:22px 0 calc(22px + env(safe-area-inset-bottom));
     animation:rise 0.22s ease-out;
+    display:flex;
+    flex-direction:column;
   }
   @media (min-width:600px){
     .overlay{align-items:center;}
-    .modal{border-radius:18px;border-bottom:1px solid var(--line);margin-bottom:40px;}
+    .modal{border-radius:18px;border-bottom:1px solid var(--line);margin-bottom:40px;max-height:85vh;}
   }
   @keyframes rise{from{transform:translateY(24px);opacity:0;} to{transform:translateY(0);opacity:1;}}
 
@@ -355,7 +358,21 @@
     font-size:18px;
     margin:0 0 18px;
     font-weight:600;
+    padding:0 22px;
+    flex:0 0 auto;
   }
+
+  .modal-body{
+    overflow-y:auto;
+    padding:0 22px;
+    flex:1 1 auto;
+    scrollbar-width:thin;
+    scrollbar-color:var(--line) transparent;
+  }
+  .modal-body::-webkit-scrollbar{width:7px;}
+  .modal-body::-webkit-scrollbar-track{background:transparent;}
+  .modal-body::-webkit-scrollbar-thumb{background:var(--line);border-radius:10px;}
+  .modal-body::-webkit-scrollbar-thumb:hover{background:var(--muted);}
 
   .field{margin-bottom:14px;}
   .field label{
@@ -391,6 +408,10 @@
   .modal-actions{
     display:flex;
     gap:10px;
+    padding:16px 22px 0;
+    flex:0 0 auto;
+    border-top:1px solid var(--line);
+    margin-top:4px;
   }
   .btn{
     flex:1;
@@ -606,20 +627,22 @@
 <div class="overlay" id="overlay">
   <div class="modal">
     <h2 id="modalTitle">Novo link</h2>
-    <div class="field">
-      <label for="inputNome">Nome do card</label>
-      <input type="text" id="inputNome" placeholder="Ex: Portal do Servidor" />
+    <div class="modal-body">
+      <div class="field">
+        <label for="inputNome">Nome do card</label>
+        <input type="text" id="inputNome" placeholder="Ex: Portal do Servidor" />
+      </div>
+      <div class="field">
+        <label>Links (use "Grupo" para agrupar por escola, categoria, etc. — opcional)</label>
+        <div id="linkRows"></div>
+        <button type="button" class="add-link-btn" id="btnAddLink">+ Adicionar link</button>
+      </div>
+      <div class="error-msg" id="formError"></div>
+      <label class="check-row">
+        <input type="checkbox" id="inputFav" />
+        <span>Marcar como favorito</span>
+      </label>
     </div>
-    <div class="field">
-      <label>Links (use "Grupo" para agrupar por escola, categoria, etc. — opcional)</label>
-      <div id="linkRows"></div>
-      <button type="button" class="add-link-btn" id="btnAddLink">+ Adicionar link</button>
-    </div>
-    <div class="error-msg" id="formError"></div>
-    <label class="check-row">
-      <input type="checkbox" id="inputFav" />
-      <span>Marcar como favorito</span>
-    </label>
     <div class="modal-actions">
       <button class="btn ghost" id="btnCancel">Cancelar</button>
       <button class="btn danger" id="btnDelete" style="display:none;">Excluir</button>
