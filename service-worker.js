@@ -1,4 +1,4 @@
-const CACHE_NAME = 'links-sre-v2';
+const CACHE_NAME = 'links-sre-v3'; // troquei a versão para forçar a limpeza do cache antigo já instalado
 const SHELL = [
   './',
   './index.html',
@@ -31,18 +31,16 @@ self.addEventListener('fetch', (event) => {
     return;
   }
 
+  // Network-first: tenta buscar a versão nova primeiro; só usa o cache se estiver offline.
   event.respondWith(
-    caches.match(event.request).then((cached) => {
-      if (cached) return cached;
-      return fetch(event.request)
-        .then((response) => {
-          if (event.request.method === 'GET' && response.ok) {
-            const clone = response.clone();
-            caches.open(CACHE_NAME).then((cache) => cache.put(event.request, clone));
-          }
-          return response;
-        })
-        .catch(() => cached);
-    })
+    fetch(event.request)
+      .then((response) => {
+        if (event.request.method === 'GET' && response.ok) {
+          const clone = response.clone();
+          caches.open(CACHE_NAME).then((cache) => cache.put(event.request, clone));
+        }
+        return response;
+      })
+      .catch(() => caches.match(event.request))
   );
 });
